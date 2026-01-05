@@ -39,5 +39,8 @@
 └── scripts/                # 빌드 및 분석 자동화 스크립트
 ```
 
+# References
+- https://wikidocs.net/book/16855
+
 ---
 *Maintained by [Kim, Minseong/felixmskim] @ CS LAB.*
