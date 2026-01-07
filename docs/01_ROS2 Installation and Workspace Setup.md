@@ -91,7 +91,8 @@ source ~/.bashrc
 ROS2가 제대로 설치가 되었다면 아래와 같이 예제를 실행해 볼 수 있다. 터미널을 열고 아래의 명령을 입력해 본다. 이 에제는 talker - listner 예제로 "hello world" 문자열을 talker 프로그램이 송신을 하면, listener 프로그램이 이 문자열을 수신한다.
 
 ```bash
-source /opt/ros/jazzy/setup.bash # bash 파일 설정했다면 pass
+# bash 파일 설정했다면 pass
+# source /opt/ros/jazzy/setup.bash
 ros2 run demo_nodes_py talker
 ```
 ![talker](./assets/image/talker%20~%20listenr%20예제.png)
