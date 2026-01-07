@@ -98,7 +98,8 @@ ros2 run demo_nodes_py talker
 Talker 프로그램을 실행했으면 다른 터미널을 열고, 아래와 같이 입력하여 listener 프로그램을 실행한다.
 
 ```bash
-source /opt/ros/jazzy/setup.bash # bash 파일 설정했다면 pass
+# bash 파일 설정했다면 pass
+# source /opt/ros/jazzy/setup.bash
 ros2 run demo_nodes_py listener
 ```
 ![listener](./assets/image/talker%20~%20listenr%20예제1.png)
