@@ -27,5 +27,5 @@
 - 커널 모듈은 `printf`가 아니라 `printk`를 써야 한다는 점이 신기했다.
 
 ## 🔗 참고 자료
-- [LKD 3rd Edition] Chapter 1-2
-- [Link] https://kernel.org/docs/...
+- [Blog] mythos.log: Linux Tutorial #1 (부팅하기)
+- [Book] 리눅스 커널 소스 해설: 기초입문 (정재준 저)
