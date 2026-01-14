@@ -254,17 +254,94 @@ source install/setup.bash
 ![turtlesim_example2](./assets/clips/turtlesim_example2.gif)
 
 
-# 5-2. Webot 설치 및 구동
+## 5-2. Webots 설치 및 ROS2 패키지 설정
 
-Ubuntu(WSL) 내부에 직접 설치하는 방법은 다음과 같다.
+Webots 시뮬레이터 본체와 ROS2를 연결해 주는 인터페이스 패키지를 설치해야 한다.
 
 ```bash
-# 1. 공식 Webots .deb 패키지 다운로드 (R2025a 기준)
-wget https://github.com/cyberbotics/webots/releases/download/R2025a/webots_2025a_amd64.deb
-
-# 2. 패키지 설치
+# 1. 공식 Webots .deb 패키지 다운로드 및 설치
+wget [https://github.com/cyberbotics/webots/releases/download/R2025a/webots_2025a_amd64.deb](https://github.com/cyberbotics/webots/releases/download/R2025a/webots_2025a_amd64.deb)
 sudo apt install ./webots_2025a_amd64.deb
 
-# 3. 설치 확인 및 실행
+# 2. ROS2 Jazzy용 Webots 인터페이스 설치
+sudo apt update
+sudo apt install ros-jazzy-webots-ros2 ros-jazzy-ros2-control ros-jazzy-ros2-controllers ros-jazzy-diff-drive-controller
+```
+
+# 6. WSL2(root 계정) 환경에서의 트러블슈팅
+
+WSL2에서 root 계정으로 시뮬레이션을 돌리려니 예기치 못한 경로 및 환경 변수 문제가 많이 발생했다. 이를 해결한 과정을 정리한다.
+
+## 6-1. 환경 변수 및 wslpath 문제 해결
+webots_ros2 드라이버는 내부적으로 리눅스-윈도우 경로 변환을 위해 wslpath를 사용한다. 하지만 root 계정은 윈도우 시스템 경로가 PATH에 잡히지 않아 에러가 발생한다.
+
+- 해결 방법: 가짜 `wslpath` 스크립트 생성 리눅스용 Webots를 쓸 때는 경로 변환이 필요 없으므로, 경로를 그대로 반환하는 스크립트를 만들어 준다.
+
+```bash
+# WEBOTS_HOME 설정
+export WEBOTS_HOME=/usr/local/webots
+echo 'export WEBOTS_HOME=/usr/local/webots' >> ~/.bashrc
+
+# wslpath 에러 방지용 래퍼 스크립트 생성
+cat << 'EOF' > /usr/bin/wslpath
+#!/bin/bash
+echo "$2"
+EOF
+chmod +x /usr/bin/wslpath
+```
+
+## 6-2. 실행 파일 경로 인식 오류 (webots.exe 찾기 error)
+드라이버가 리눅스 환경임에도 불구하고 `webots.exe`라는 윈도우용 파일을 찾는 경우가 있다.
+
+- 해결 방법: 심볼릭 링크 트릭
+
+```bash
+mkdir -p /usr/local/webots/msys64/mingw64/bin/
+ln -sf /usr/local/webots/webots /usr/local/webots/msys64/mingw64/bin/webots.exe
+```
+
+## 6-3. 그래픽 가속 및 소리 에러
+
+WSLg 환경에서 그래픽 창이 뜨자마자 꺼지거나, 소리 장치(OpenAL)를 찾지 못해 시스템이 멈추는 현상이 발생한다.
+
+- 해결 방법: 소프트웨어 렌더링 및 환경 변수 강제 지정
+
+```bash
+export LIBGL_ALWAYS_SOFTWARE=1  # 그래픽 드라이버 충돌 시 사용
+export DISPLAY=:0               # 디스플레이 포트 지정
+export USER=root                # 사용자 이름 명시
+```
+
+# 7. Webots 터틀봇3 시뮬레이션 구동
+모든 설정이 완료되었다면 아래 명령어로 터틀봇3 버거 모델을 띄울 수 있다.
+
+```bash
+source /opt/ros/jazzy/setup.bash
 ros2 launch webots_ros2_turtlebot robot_launch.py
 ```
+
+## 7-1. 키보드로 로봇 제어하기 (Teleop)
+Webots 창이 뜨고 시뮬레이션 시간이 흐르고 있다면 (하단 Time 확인), 새 터미널에서 제어 노드를 실행한다.
+
+```bash
+# 토픽 이름 리매핑과 함께 실행
+ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r /cmd_vel:=/diffdrive_controller/cmd_vel
+```
+
+- **왜 리매핑(`/cmd_vel:=/diffdrive_controller/cmd_vel`)이 필요한가?**
+Webots 내부의 `ros2_control` 노드가 실제 바퀴를 굴리기 위해 Subscribe하는 토픽 이름이 `/diffdrive_controller/cmd_vel`이기 때문이다.
+
+# 8. 시스템 구조 분석
+- **App Layer:** `teleop_twist_keyboard`가 사용자의 키 입력을 `Twist` 메시지로 변환
+- **Middleware Layer:** ROS2 DDS를 통해 `/diffdrive_controller/cmd_vel` 토픽 전송
+- **Hardware Abstraction:** `ros2_control`의 `DiffDriveController`가 메시지를 받아 각 바퀴의 조인트 속도로 변환
+- **Simulation Layer:** `webots_ros2_driver`가 이 신호를 Webots API로 전달하여 가상 로봇 구동
+
+현재 `BallJoint(Caster Joint)` 관련 URDF 내보내기 경고가 뜨고 있는데, 이는 터틀봇 모델의 보조 바퀴 모델링 방식과 ROS2 URDF 파서 간의 호환성 문제로 보인다. 실제 주행에는 지장이 없으나, 정밀한 물리 분석 시에는 조인트 타입 수정을 고려해야 한다.
+
+향후 문제를 해결하여 수정하겠다.
+
+## 🔗 참고 자료
+- [Official] Docker Documentation: Install on Ubuntu
+
+- [blog]] 로봇운영체제 실습 - Simulation: Webots
