@@ -213,3 +213,28 @@ source ~/ros2_ws/install/setup.bash
 ```
 
 `source ~/.bashrc`를 입력해 변경 사항을 바로 적용하자.
+
+# + VS Code 'Dev Containers' 확장 도구
+Docker 컨테이너는 기본적으로 호스트와 격리된 환경이다. 그래서 ubuntu와 달리 `code`라는 명령어가 설치되어 있지 않거나, 있더라도 호스트의 GUI와 연결되지 않는다.
+
+그래서 **VS Code 'Dev Container'** 라는 확장도구를 사용할 것이다.
+
+VS Code에서 컨테이너 내부의 파일을 마치 로컬 파일처럼 편집할 수 있게 해주는 강력한 확장 기능이다.
+
+1. VS Code를 열고 왼쪽 사이드바의 Extensions(`Ctrl` + `Shift` + `X`)에서 **Dev Container**를 검색해서 설치하자. (보통 Remote Development 팩에 포함되어 있다)
+
+2. **실행 중인 컨테이너에 접속:** 
+
+Docker conatiner를 먼저 실행해준다. 
+
+![running container](./assets/image/ch03/docker%20running.png)
+
+VS Code 왼쪽 하단의 초록색 아이콘(`><`)을 클릭하여 **"Attach to Running Container..."** 를 선택하자.
+
+![docker 1](./assets/image/ch03/docker%20vscode%201.png)
+
+![docker 2](./assets/image/ch03/docker%20vscode%202.png)
+
+목록에서 현재 실행 중인 ROS 컨테이너를 선택하면 끝이다.
+
+![docker 2](./assets/image/ch03/docker%20vscode%203.png)
