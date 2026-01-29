@@ -194,3 +194,7 @@ Docker 컨테이너는 기본적으로 터미널 기반이라 코드 수정이 �
 3. 좌측 하단 **초록색 아이콘(`><`)** 클릭 -> **"Attach to Running Container..."** 선택.
 
 4. 이제 컨테이너 내부의 파일을 VS Code의 강력한 기능들(자동 완성, 디버깅 등)과 함께 편집할 수 있다.
+
+## 🔗 참고 자료
+- [Official] Docker Documentation: Install on Ubuntu
+- [blog]] ROS 2의 소개와 개발환경 구성
