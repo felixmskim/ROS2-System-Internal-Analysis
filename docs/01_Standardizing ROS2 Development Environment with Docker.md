@@ -146,7 +146,9 @@ docker run -it --name my_ros2_jazzy_container \
 
 - `-e DISPLAY=$DISPLAY` & `-v ...`: 컨테이너 내부의 GUI 창(Rviz2 등)을 내 우분투 화면에 띄우기 위한 핵심 설정이다.
 
+
 # 7. 실행 확인
+
 컨테이너 안으로 들어오면 별도의 `source` 명령 없이도 ROS2 명령어가 바로 먹힐 것이다. (`Dockerfile`에서 `.bashrc`에 등록했기 때문!)
 
 ```Bash
