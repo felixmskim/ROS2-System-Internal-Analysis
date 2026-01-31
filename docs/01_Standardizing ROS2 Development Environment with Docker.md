@@ -89,6 +89,7 @@ nano Dockerfile
 **[Dockerfile 내용]**
 ```bash
 # 1. ROS2 Jazzy 공식 데스크탑 이미지를 베이스로 사용
+# 
 FROM osrf/ros:jazzy-desktop
 
 # 2. 기본 쉘을 bash로 설정
@@ -120,6 +121,10 @@ RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc
 # 7. 작업 디렉토리 설정
 WORKDIR /root
 ```
+
+위 과정에서 우리는 로컬 Ubuntu에 ROS2 패키지를 직접 설치한 적이 없다. 그 이유는 `Dockerfile`의 `FROM osrf/ros:jazzy-desktop`이라는 설정 덕분이다. 
+
+이는 ROS2 공식 재단에서 **Ubuntu 환경과 ROS2 Jazzy를 미리 완벽하게 세팅해둔 '이미지'** 를 베이스로 사용하겠다는 뜻이다. 따라서 호스트 PC에는 Docker만 설치되어 있다면, ROS2 관련 라이브러리를 직접 깔지 않아도 컨테이너 내부에서 모든 ROS2 기능을 완벽하게 사용할 수 있다. 이것이 바로 호스트 시스템을 더럽히지 않는 Docker의 진정한 강력함이다.
 
 작성이 끝났다면 아래 명령어로 이미지를 빌드하자.
 
