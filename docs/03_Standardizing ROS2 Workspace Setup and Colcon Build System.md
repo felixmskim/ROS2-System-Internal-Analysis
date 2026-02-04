@@ -109,6 +109,12 @@ docker run -it --name ros2_jazzy_container \
 
 ![p10k configure](./assets/image/ch03/container%20start.png)
 
+실행 중인 Docker 컨테이너 내에서 새로운 명령을 실행하거나 셸(Shell)에 접속하고 싶다면 다음의 명령어를 입력하면 된다.
+
+```zsh
+docker exec -it ros2_jazzy_container /bin/zsh
+```
+
 # 2. Manual Workspace Initialization
 
 컨테이너 접속한 후, 워크스페이스를 생성한다. 이는 각 프로젝트마다 독립된 환경을 파악하기 위함이다.
