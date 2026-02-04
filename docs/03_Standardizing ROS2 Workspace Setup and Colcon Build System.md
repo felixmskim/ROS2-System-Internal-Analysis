@@ -82,7 +82,7 @@ WORKDIR /root
 ### Build Command
 
 ```bash
-docker build -t ros2-jazzy-zsh .
+docker build -t ros2_jazzy .
 ```
 
 ### Execution Command
