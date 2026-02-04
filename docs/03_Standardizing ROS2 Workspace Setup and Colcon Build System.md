@@ -2,51 +2,87 @@ ROS2 Jazy 환경에 효율적인 개발을 위한 **Workspace** 를 구축하고
 
 
 # 1. Update Environment Configuration
-다음은 업데이트된 Dockerfile을 명시하겠다. 이 환경은 GUI 개발 도구인 `QtCreator`와 이전에 다룬 vGPU 가속 설정을 포함한다.
+다음은 업데이트된 Dockerfile을 명시하겠다. 이 환경은 GUI 개발 도구인 `QtCreator`와 이전에 다룬 vGPU 가속 설정을 포함한다. 그리고 bash에서 예쁜 zsh로 바꿨다.
 
 ### Dockerfile (Fixed Version)
 
 ```Dockerfile
-# 1. 베이스 이미지: ROS2 Jazzy 데스크탑 버전 (Ubuntu 24.04 기반)
+# 베이스 이미지: Ubuntu 24.04 기반의 ROS2 Jazzy 데스크탑 버전
 FROM osrf/ros:jazzy-desktop
 
-# 2. 기본 쉘 및 환경 변수 설정
+# 기본 쉘 설정 및 환경 변수
 SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 3. 필수 패키지 및 저장소 설정
-# software-properties-common: universe 저장소 추가를 위한 도구
-# qtcreator: IDE 기반의 시스템 분석 및 개발 환경
+# 1. 필수 패키지 설치 및 Zsh 추가
+# zsh: 효율적인 쉘 환경을 위해 추가
+# curl: Oh My Zsh 설치 스크립트 실행을 위해 필요
 RUN apt-get update && apt-get install -y \
-    locales sudo vim git python3-pip \
+    locales \
+    sudo \
+    vim \
+    git \
+    zsh \
+    curl \
+    python3-pip \
     software-properties-common \
     && add-apt-repository universe \
     && apt-get update && apt-get install -y \
-    qtcreator build-essential \
+    qtcreator \
+    build-essential \
     python3-colcon-common-extensions \
     python3-rosdep \
     && rm -rf /var/lib/apt/lists/*
 
-# 4. 로캘(Locale) 설정 (UTF-8 환경 보장)
+# 로캘(Locale) 설정: 한글 깨짐 방지 및 시스템 안정성 확보
 RUN locale-gen en_US.UTF-8
 ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 
-# 5. GPU 및 GUI 가속 설정 (WSL/Windows 11 Intel Arc vGPU)
+# GPU 및 GUI 가속 설정 (WSL/Windows 11 환경 최적화)
 ENV MESA_D3D12_DEFAULT_ADAPTER_NAME=Arc
 ENV GALLIUM_DRIVER=d3d12
 
-# 6. DDS 및 QoS 환경 설정 (블로그 기반 최적화 반영)
+# DDS 및 QoS 환경 설정
 ENV RMW_IMPLEMENTATION=rmw_fastrtps_cpp
 ENV ROS_DOMAIN_ID=0
 
-# 7. 자동 환경 설정 (.bashrc)
-# 컨테이너 접속 시 ROS2 및 빌드된 워크스페이스 환경 자동 로드
-RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc \
-    && echo "if [ -f /root/ros2_ws/install/setup.bash ]; then source /root/ros2_ws/install/setup.bash; fi" >> /root/.bashrc \
-    && echo "source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash" >> /root/.bashrc
+# ---------------------------------------------------------
+# 2. Zsh 및 터미널 환경 최적화 (Oh My Zsh, Powerlevel10k)
+# ---------------------------------------------------------
 
-WORKDIR /root/ros2_ws
+# Oh My Zsh 설치 (비대화형 모드 --unattended 사용)
+RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+
+# Powerlevel10k 테마 및 플러그인 다운로드
+RUN git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k \
+    && git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions \
+    && git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+
+# .zshrc 설정 업데이트
+# - 테마 적용 및 플러그인 활성화
+# - 가독성 개선을 위한 ls 별칭(alias l) 추가
+# - ROS2 Jazzy 환경 설정 (Zsh 전용 .zsh 파일 로드)
+RUN sed -i 's/ZSH_THEME="robbyrussell"/ZSH_THEME="powerlevel10k\/powerlevel10k"/' ~/.zshrc \
+    && sed -i 's/plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting)/' ~/.zshrc \
+    && echo 'alias l="ls --color=auto --group-directories-first"' >> ~/.zshrc \
+    && echo "source /opt/ros/jazzy/setup.zsh" >> ~/.zshrc \
+    && echo "if [ -f /root/ros2_ws/install/setup.zsh ]; then source /root/ros2_ws/install/setup.zsh; fi" >> ~/.zshrc \
+    && echo "source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.zsh" >> ~/.zshrc
+
+# 3. 기본 실행 환경 설정
+# 컨테이너 실행 시 Bash 대신 Zsh가 기본으로 실행되도록 설정
+ENTRYPOINT ["/bin/zsh"]
+
+# 작업 디렉토리 설정
+WORKDIR /root
+```
+
+### Build Command
+
+```bash
+docker build -t ros2-jazzy-zsh .
 ```
 
 ### Execution Command
@@ -66,8 +102,12 @@ docker run -it --name ros2_jazzy_container \
   -e DISPLAY=$DISPLAY \
   -e LD_LIBRARY_PATH=/usr/lib/wsl/lib \
   -e MESA_D3D12_DEFAULT_ADAPTER_NAME=Arc \
-  my_ros2_jazzy:latest
+  ros2_jazzy:latest
 ```
+
+성공적으로 세팅이 되었다면, 컨테이너 처음 접속 시 Powerlevel10k 설정 마법사가 자동으로 뜰 것이다.
+
+![p10k configure](./assets/image/ch03/container%20start.png)
 
 # 2. Manual Workspace Initialization
 
